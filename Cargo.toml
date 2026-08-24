@@ -7,6 +7,8 @@ members = [
     "crates/audio-core/mixer",
     "apps/sender/native",
     "apps/receiver/native",
+    "apps/sender/gui/src-tauri",
+    "apps/receiver/gui/src-tauri",
 ]
 
 [workspace.package]

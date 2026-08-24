@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Audio Network - Sender</title>
+    <script type="module" src="/main.js" defer></script>
+  </head>
+
+  <body>
+    <main class="container">
+      <header class="topbar">
+        <h1>Sender</h1>
+        <span id="status-badge" class="badge badge-idle">Idle</span>
+      </header>
+
+      <section class="card">
+        <div class="field">
+          <label for="source-select">Audio source</label>
+          <div class="row">
+            <select id="source-select"></select>
+            <button id="refresh-sources" type="button" class="secondary">Refresh</button>
+          </div>
+          <p class="hint" id="source-hint"></p>
+        </div>
+
+        <div class="field">
+          <label for="target-input">Receivers (host:port)</label>
+          <div class="row">
+            <input id="target-input" type="text" placeholder="192.168.1.50:9000" />
+            <button id="add-target" type="button" class="secondary">Add</button>
+          </div>
+          <ul id="target-list" class="chip-list"></ul>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="bind-input">Bind address</label>
+            <input id="bind-input" type="text" value="0.0.0.0:0" />
+          </div>
+          <div class="field">
+            <label for="frames-input">Frames / packet</label>
+            <input id="frames-input" type="number" min="1" value="160" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="gain-slider">Gain <span id="gain-value" class="mono">1.00</span></label>
+          <input id="gain-slider" type="range" min="0" max="2" step="0.01" value="1" />
+        </div>
+
+        <div class="field field-inline">
+          <label class="checkbox">
+            <input id="mute-toggle" type="checkbox" />
+            Mute
+          </label>
+        </div>
+
+        <div class="actions">
+          <button id="start-btn" type="button" class="primary">Start streaming</button>
+          <button id="stop-btn" type="button" class="danger" disabled>Stop</button>
+        </div>
+
+        <p id="error-msg" class="error"></p>
+      </section>
+
+      <section class="card stats">
+        <h2>Stream</h2>
+        <dl class="stat-grid">
+          <dt>Source</dt>
+          <dd id="stat-source">-</dd>
+          <dt>Format</dt>
+          <dd id="stat-format">-</dd>
+          <dt>Local address</dt>
+          <dd id="stat-local">-</dd>
+          <dt>Packets sent</dt>
+          <dd id="stat-packets" class="mono">0</dd>
+        </dl>
+      </section>
+    </main>
+  </body>
+</html>
