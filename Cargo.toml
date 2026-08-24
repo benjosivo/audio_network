@@ -1,0 +1,31 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/protocol",
+    "crates/network",
+    "crates/audio-core/capture",
+    "crates/audio-core/mixer",
+    "apps/sender/native",
+    "apps/receiver/native",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+bincode = "1"
+thiserror = "1"
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+cpal = "0.15"
+rtrb = "0.3"
+parking_lot = "0.12"
+protocol = { path = "crates/protocol" }
+network = { path = "crates/network" }
+audio-core-capture = { path = "crates/audio-core/capture" }
+audio-core-mixer = { path = "crates/audio-core/mixer" }

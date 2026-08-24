@@ -1,0 +1,11 @@
+[package]
+name = "protocol"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Wire protocol for the audio-over-Ethernet app: frames, headers and control messages."
+
+[dependencies]
+serde = { workspace = true }
+bincode = { workspace = true }
+thiserror = { workspace = true }

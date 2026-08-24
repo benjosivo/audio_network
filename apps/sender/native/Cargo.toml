@@ -1,0 +1,17 @@
+[package]
+name = "sender"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "CLI: captures a local audio source (default: WASAPI loopback) and streams it over UDP."
+
+[dependencies]
+protocol = { workspace = true }
+network = { workspace = true }
+audio-core-capture = { workspace = true }
+audio-core-mixer = { workspace = true }
+rtrb = { workspace = true }
+clap = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }

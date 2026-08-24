@@ -1,0 +1,15 @@
+[package]
+name = "audio-core-capture"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Audio source capture: AudioSource trait, WASAPI loopback (Windows), and cpal input devices."
+
+[dependencies]
+cpal = { workspace = true }
+rtrb = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+wasapi = "0.16"
