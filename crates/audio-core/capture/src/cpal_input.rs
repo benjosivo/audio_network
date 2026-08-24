@@ -26,6 +26,17 @@ impl CpalInputSource {
     }
 }
 
+/// Names of available input devices (mic/line-in, and on Linux — via
+/// PulseAudio/PipeWire — monitor sources, which is how a loopback-style
+/// capture is done there since `cpal` has no WASAPI-style loopback API).
+/// Intended for populating a device picker; best-effort (empty on error).
+pub fn list_input_devices() -> Vec<String> {
+    let host = cpal::default_host();
+    host.input_devices()
+        .map(|devices| devices.filter_map(|d| d.name().ok()).collect())
+        .unwrap_or_default()
+}
+
 fn resolve_input_device(name: Option<&str>) -> Result<cpal::Device, CaptureError> {
     let host = cpal::default_host();
     match name {
