@@ -3,7 +3,7 @@ name = "sender"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "CLI: captures a local audio source (default: WASAPI loopback) and streams it over UDP."
+description = "CLI: captures a local audio source (WASAPI loopback on Windows, cpal input device elsewhere) and streams it over UDP."
 
 [dependencies]
 protocol = { workspace = true }

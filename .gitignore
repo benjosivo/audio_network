@@ -1,1 +1,5 @@
 /target
+
+# makepkg build output
+/packaging/
+*.pkg.tar.zst

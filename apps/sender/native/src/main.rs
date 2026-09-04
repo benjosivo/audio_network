@@ -1,6 +1,12 @@
-//! Milestone-1 sender CLI: captures one audio source (default: WASAPI
-//! loopback of the default output device) and streams it over UDP to one or
-//! more receivers.
+//! Milestone-1 sender CLI: captures one audio source and streams it over
+//! UDP to one or more receivers.
+//!
+//! Default source is WASAPI loopback of the default output device on
+//! Windows (where `cpal` has no native loopback support), or the default
+//! `cpal` input device elsewhere. Pass `--device` to pick a specific input
+//! device instead — on Linux with PipeWire/PulseAudio, selecting a
+//! "Monitor of ..." device captures system audio the same way loopback does
+//! on Windows. Run with `--list-devices` to see what's available.
 
 use std::net::SocketAddr;
 use std::time::{Duration, Instant};
@@ -8,6 +14,8 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result};
 use clap::Parser;
 
+use audio_core_capture::cpal_input::{list_input_devices, CpalInputSource};
+#[cfg(windows)]
 use audio_core_capture::wasapi_loopback::WasapiLoopbackSource;
 use audio_core_capture::{AudioSource, CAPTURE_RING_CAPACITY_SAMPLES};
 use audio_core_mixer::Mixer;
@@ -22,7 +30,7 @@ const SOURCE_ID: u32 = 1;
 #[command(about = "Captures local audio and streams it over UDP")]
 struct Args {
     /// Receiver address to stream to, e.g. 192.168.1.50:9000. Repeatable.
-    #[arg(long = "target", required = true)]
+    #[arg(long = "target", required_unless_present = "list_devices")]
     targets: Vec<SocketAddr>,
 
     /// Local address to send from.
@@ -36,6 +44,34 @@ struct Args {
     /// Audio frames per UDP packet (at 48kHz stereo, 160 is ~3.3ms).
     #[arg(long, default_value_t = 160)]
     frames_per_packet: usize,
+
+    /// Capture device name from --list-devices (a cpal input device; on
+    /// Linux this includes PipeWire/PulseAudio monitor sources for
+    /// system-audio capture). Defaults to WASAPI loopback on Windows, or the
+    /// default input device elsewhere.
+    #[arg(long)]
+    device: Option<String>,
+
+    /// List available capture devices and exit.
+    #[arg(long)]
+    list_devices: bool,
+}
+
+/// Picks the capture source: a named `cpal` input device if `--device` was
+/// given, otherwise the platform default (WASAPI loopback on Windows, the
+/// default `cpal` input device elsewhere).
+fn make_source(device: Option<&str>) -> Box<dyn AudioSource> {
+    if let Some(name) = device {
+        return Box::new(CpalInputSource::named(name.to_string()));
+    }
+    #[cfg(windows)]
+    {
+        Box::new(WasapiLoopbackSource::default_device())
+    }
+    #[cfg(not(windows))]
+    {
+        Box::new(CpalInputSource::default_device())
+    }
 }
 
 fn main() -> Result<()> {
@@ -43,9 +79,18 @@ fn main() -> Result<()> {
 
     let args = Args::parse();
 
+    if args.list_devices {
+        #[cfg(windows)]
+        println!("(default) WASAPI loopback of the default output device");
+        for name in list_input_devices() {
+            println!("{name}");
+        }
+        return Ok(());
+    }
+
     let (producer, mut consumer) = rtrb::RingBuffer::<f32>::new(CAPTURE_RING_CAPACITY_SAMPLES);
 
-    let source: Box<dyn AudioSource> = Box::new(WasapiLoopbackSource::default_device());
+    let source: Box<dyn AudioSource> = make_source(args.device.as_deref());
     let source_name = source.name();
     let (_capture_handle, format) = source.start(producer).context("failed to start audio capture")?;
     tracing::info!(source = %source_name, sample_rate = format.sample_rate, channels = format.channels, "capture started");
