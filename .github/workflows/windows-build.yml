@@ -1,0 +1,57 @@
+name: Windows build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cli:
+    name: CLI (sender.exe / receiver.exe)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - run: cargo build --release --workspace --locked
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cli-windows-x64
+          path: |
+            target/release/sender.exe
+            target/release/receiver.exe
+
+  gui:
+    name: ${{ matrix.app }} GUI installer
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [sender, receiver]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/${{ matrix.app }}/gui/src-tauri
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm ci
+        working-directory: apps/${{ matrix.app }}/gui
+
+      - run: npm run tauri build
+        working-directory: apps/${{ matrix.app }}/gui
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.app }}-gui-windows-x64
+          path: |
+            apps/${{ matrix.app }}/gui/src-tauri/target/release/bundle/nsis/*.exe
+            apps/${{ matrix.app }}/gui/src-tauri/target/release/bundle/msi/*.msi
