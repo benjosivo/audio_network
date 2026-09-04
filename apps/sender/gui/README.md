@@ -5,6 +5,11 @@ and streams it over UDP to one or more receivers. Same pipeline as
 `apps/sender/native`, wrapped with Start/Stop and live controls instead of
 CLI flags.
 
+The window is a small panel showing only status, gain, and mute. Click the
+⚙ button to configure the audio source and receiver targets — that
+configuration is remembered in the window's local storage, and streaming
+starts automatically the next time the app launches.
+
 ## Run in development
 
 ```

@@ -15,7 +15,29 @@
         <span id="status-badge" class="badge badge-idle">Idle</span>
       </header>
 
-      <section class="card">
+      <p id="status-line" class="status-line"></p>
+
+      <div class="field">
+        <label for="volume-slider">Volume <span id="volume-value" class="mono">1.00</span></label>
+        <input id="volume-slider" type="range" min="0" max="2" step="0.01" value="1" />
+      </div>
+
+      <div class="field-inline">
+        <label class="checkbox">
+          <input id="mute-toggle" type="checkbox" />
+          Mute
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="start-btn" type="button" class="primary">Start</button>
+        <button id="stop-btn" type="button" class="danger" disabled>Stop</button>
+        <button id="settings-toggle" type="button" class="secondary icon-btn" title="Settings" aria-expanded="false">⚙</button>
+      </div>
+
+      <p id="error-msg" class="error"></p>
+
+      <section id="settings-panel" class="card settings-panel" hidden>
         <div class="field-row">
           <div class="field">
             <label for="listen-input">Listen address</label>
@@ -27,42 +49,7 @@
           </div>
         </div>
 
-        <div class="field">
-          <label for="volume-slider">Master volume <span id="volume-value" class="mono">1.00</span></label>
-          <input id="volume-slider" type="range" min="0" max="2" step="0.01" value="1" />
-        </div>
-
-        <div class="field field-inline">
-          <label class="checkbox">
-            <input id="mute-toggle" type="checkbox" />
-            Mute
-          </label>
-        </div>
-
-        <div class="actions">
-          <button id="start-btn" type="button" class="primary">Start listening</button>
-          <button id="stop-btn" type="button" class="danger" disabled>Stop</button>
-        </div>
-
-        <p id="error-msg" class="error"></p>
-      </section>
-
-      <section class="card stats">
-        <h2>Stream</h2>
-        <dl class="stat-grid">
-          <dt>From</dt>
-          <dd id="stat-from">-</dd>
-          <dt>Format</dt>
-          <dd id="stat-format">-</dd>
-          <dt>Received</dt>
-          <dd id="stat-received" class="mono">0</dd>
-          <dt>Late / dropped</dt>
-          <dd id="stat-late" class="mono">0</dd>
-          <dt>Duplicates dropped</dt>
-          <dd id="stat-dup" class="mono">0</dd>
-          <dt>Underruns</dt>
-          <dd id="stat-underruns" class="mono">0</dd>
-        </dl>
+        <p class="hint">This device is remembered and used automatically next time the app starts.</p>
       </section>
     </main>
   </body>

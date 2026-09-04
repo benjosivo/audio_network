@@ -24,35 +24,29 @@ body {
 }
 
 .container {
-  max-width: 640px;
+  max-width: 320px;
   margin: 0 auto;
-  padding: 24px 20px 48px;
+  padding: 16px 16px 20px;
+  max-height: 100vh;
+  overflow-y: auto;
 }
 
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 h1 {
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   margin: 0;
 }
 
-h2 {
-  font-size: 1rem;
-  margin: 0 0 12px;
-  color: var(--text-dim);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
 .badge {
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -76,16 +70,24 @@ h2 {
   color: var(--danger);
 }
 
+.status-line {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin: 0 0 14px;
+  min-height: 1em;
+  word-break: break-word;
+}
+
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 16px;
+  padding: 16px;
+  margin-top: 14px;
 }
 
 .field {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .field:last-child {
@@ -94,8 +96,8 @@ h2 {
 
 .field-row {
   display: flex;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 14px;
 }
 
 .field-row .field {
@@ -106,11 +108,12 @@ h2 {
 .field-inline {
   display: flex;
   align-items: center;
+  margin-bottom: 14px;
 }
 
 label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-dim);
   margin-bottom: 6px;
 }
@@ -139,8 +142,8 @@ select {
   border: 1px solid var(--border);
   color: var(--text);
   border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 0.9rem;
+  padding: 7px 9px;
+  font-size: 0.85rem;
   width: 100%;
 }
 
@@ -154,7 +157,7 @@ input[type="range"] {
 }
 
 .hint {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--text-dim);
   margin: 6px 0 0;
 }
@@ -162,8 +165,8 @@ input[type="range"] {
 button {
   border: none;
   border-radius: 8px;
-  padding: 9px 16px;
-  font-size: 0.9rem;
+  padding: 8px 14px;
+  font-size: 0.85rem;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -191,16 +194,25 @@ button.danger {
   border: 1px solid var(--danger);
 }
 
+button.icon-btn {
+  padding: 8px 10px;
+  flex: 0 0 auto;
+}
+
 .actions {
   display: flex;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 8px;
+}
+
+.actions .primary,
+.actions .danger {
+  flex: 1;
 }
 
 .error {
   color: var(--danger);
-  font-size: 0.85rem;
-  margin: 12px 0 0;
+  font-size: 0.8rem;
+  margin: 10px 0 0;
   min-height: 1em;
 }
 
@@ -221,7 +233,7 @@ button.danger {
   border: 1px solid var(--border);
   border-radius: 999px;
   padding: 4px 6px 4px 12px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-family: "Cascadia Code", "SF Mono", Consolas, monospace;
 }
 
@@ -240,22 +252,4 @@ button.danger {
 .chip-remove:hover:not(:disabled) {
   background: var(--border);
   color: var(--text);
-}
-
-.stat-grid {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px 16px;
-  margin: 0;
-}
-
-.stat-grid dt {
-  color: var(--text-dim);
-  font-size: 0.85rem;
-}
-
-.stat-grid dd {
-  margin: 0;
-  font-size: 0.85rem;
-  text-align: right;
 }

@@ -6,6 +6,11 @@ default output device with a local master volume/mute applied. Same
 pipeline as `apps/receiver/native`, wrapped with Start/Stop and live
 controls instead of CLI flags.
 
+The window is a small panel showing only status, volume, and mute, and it
+starts listening automatically as soon as the app launches. Click the ⚙
+button to change the listen address or jitter buffer size — that
+configuration is remembered in the window's local storage.
+
 ## Run in development
 
 ```

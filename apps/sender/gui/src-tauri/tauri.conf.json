@@ -11,8 +11,10 @@
     "windows": [
       {
         "title": "Audio Network - Sender",
-        "width": 900,
-        "height": 700
+        "width": 320,
+        "height": 280,
+        "minWidth": 280,
+        "minHeight": 220
       }
     ],
     "security": {
