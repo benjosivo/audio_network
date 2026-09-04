@@ -42,6 +42,22 @@ apps/
 
 Requires a recent stable Rust toolchain.
 
+### Quick start (Arch Linux)
+
+`./install.sh` installs system build/runtime dependencies via `pacman`,
+builds the whole workspace, and builds + installs both GUI apps as pacman
+packages in one go:
+
+```sh
+./install.sh              # both apps
+./install.sh sender       # sender GUI only
+./install.sh receiver     # receiver GUI only
+```
+
+It's a thin wrapper around the steps below and the pacman installer
+described under [Linux installer (pacman)](#linux-installer-pacman). On
+other distros, follow the manual steps in the sections below instead.
+
 ### CLI
 
 ```sh

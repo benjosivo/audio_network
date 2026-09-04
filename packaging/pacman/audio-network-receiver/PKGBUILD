@@ -1,0 +1,31 @@
+# Maintainer: benjosivo <macklem75007@gmail.com>
+pkgname=audio-network-receiver
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Audio Network Receiver GUI (Tauri)"
+arch=('x86_64')
+url="https://github.com/benjosivo/audio_network"
+license=('MIT' 'Apache')
+depends=('webkit2gtk-4.1' 'gtk3' 'libappindicator-gtk3' 'librsvg' 'alsa-lib')
+makedepends=('rust' 'gcc' 'pkgconf')
+source=()
+sha256sums=()
+
+# This PKGBUILD builds directly from the local monorepo checkout rather than
+# a fetched tarball, so it walks back up to the workspace root instead of
+# using $srcdir.
+_repo_root="$startdir/../../.."
+
+build() {
+  cd "$_repo_root"
+  cargo build --release --locked -p receiver-gui
+}
+
+package() {
+  cd "$_repo_root"
+  install -Dm755 "target/release/receiver-gui" "$pkgdir/usr/bin/audio-network-receiver"
+  install -Dm644 "apps/receiver/gui/src-tauri/icons/128x128.png" \
+    "$pkgdir/usr/share/icons/hicolor/128x128/apps/audio-network-receiver.png"
+  install -Dm644 "packaging/pacman/audio-network-receiver/audio-network-receiver.desktop" \
+    "$pkgdir/usr/share/applications/audio-network-receiver.desktop"
+}

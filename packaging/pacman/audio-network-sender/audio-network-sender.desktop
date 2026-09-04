@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Audio Network Sender
+Comment=Tauri GUI for the audio-network sender
+Exec=env WEBKIT_DISABLE_DMABUF_RENDERER=1 audio-network-sender
+Icon=audio-network-sender
+Terminal=false
+Categories=AudioVideo;Audio;Network;

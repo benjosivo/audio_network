@@ -1,5 +1,5 @@
 /target
 
-# makepkg build output
-/packaging/
+# makepkg build output (PKGBUILD sources under packaging/pacman/ stay tracked)
+packaging/pacman/*/pkg/
 *.pkg.tar.zst

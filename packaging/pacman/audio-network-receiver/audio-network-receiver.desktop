@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Audio Network Receiver
+Comment=Tauri GUI for the audio-network receiver
+Exec=env WEBKIT_DISABLE_DMABUF_RENDERER=1 audio-network-receiver
+Icon=audio-network-receiver
+Terminal=false
+Categories=AudioVideo;Audio;Network;
