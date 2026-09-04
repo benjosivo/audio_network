@@ -2,6 +2,9 @@ name: Windows build
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - worktree-windows-build
 
 jobs:
   cli:
