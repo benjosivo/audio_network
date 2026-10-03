@@ -131,6 +131,7 @@ fn start_receiver(app: AppHandle, state: State<AppState>, cfg: StartConfig) -> R
                 std::thread::Builder::new()
                     .name("receiver-gui-udp-recv".into())
                     .spawn(move || {
+                        network::raise_current_thread_priority();
                         let mut buf = vec![0u8; MAX_UDP_PAYLOAD];
                         while !stop.load(Ordering::Relaxed) {
                             match socket.recv_packet(&mut buf) {

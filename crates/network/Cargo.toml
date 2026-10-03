@@ -10,3 +10,5 @@ protocol = { workspace = true }
 parking_lot = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
+socket2 = "0.5"
+thread-priority = "1"

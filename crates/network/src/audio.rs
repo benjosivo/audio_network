@@ -5,6 +5,12 @@ use std::net::{SocketAddr, UdpSocket};
 use std::time::Duration;
 
 use protocol::AudioPacket;
+use socket2::{Domain, Protocol, Socket, Type};
+
+/// Kernel receive buffer requested for the audio socket. The default (64 KiB
+/// on Windows) overflows after ~100 ms if the receive thread is starved by
+/// another busy process, silently dropping packets.
+const RECV_BUFFER_BYTES: usize = 512 * 1024;
 
 pub struct UdpAudioSocket {
     sock: UdpSocket,
@@ -12,8 +18,12 @@ pub struct UdpAudioSocket {
 
 impl UdpAudioSocket {
     pub fn bind(local_addr: SocketAddr) -> io::Result<Self> {
-        let sock = UdpSocket::bind(local_addr)?;
-        Ok(Self { sock })
+        let socket = Socket::new(Domain::for_address(local_addr), Type::DGRAM, Some(Protocol::UDP))?;
+        if let Err(e) = socket.set_recv_buffer_size(RECV_BUFFER_BYTES) {
+            tracing::warn!(error = %e, "could not enlarge UDP receive buffer");
+        }
+        socket.bind(&local_addr.into())?;
+        Ok(Self { sock: socket.into() })
     }
 
     pub fn local_addr(&self) -> io::Result<SocketAddr> {

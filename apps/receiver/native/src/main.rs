@@ -68,6 +68,7 @@ fn main() -> Result<()> {
         std::thread::Builder::new()
             .name("udp-recv".into())
             .spawn(move || {
+                network::raise_current_thread_priority();
                 let mut buf = vec![0u8; MAX_UDP_PAYLOAD];
                 loop {
                     match socket.recv_packet(&mut buf) {
@@ -117,6 +118,7 @@ fn main() -> Result<()> {
             late_dropped = stats.late_dropped,
             duplicate_dropped = stats.duplicate_dropped,
             underruns = stats.underruns,
+            resyncs = stats.resyncs,
             master_volume = master_gain.volume(),
             master_muted = master_gain.is_muted(),
             "receiver stats"

@@ -32,6 +32,9 @@ pub struct JitterStats {
     pub late_dropped: u64,
     pub duplicate_dropped: u64,
     pub underruns: u64,
+    /// Times the play position was re-anchored to the incoming stream after
+    /// a stall (see [`JitterBuffer::push`]).
+    pub resyncs: u64,
 }
 
 pub struct JitterBuffer {
@@ -42,6 +45,8 @@ pub struct JitterBuffer {
     next_play_seq: Option<u32>,
     play_frame_cursor: usize,
     started: bool,
+    /// Consecutive packet-slots played as silence since the last real audio.
+    underrun_run: usize,
     stats: JitterStats,
     last_frame: Vec<f32>,
     drop_scratch: Vec<f32>,
@@ -57,6 +62,7 @@ impl JitterBuffer {
             next_play_seq: None,
             play_frame_cursor: 0,
             started: false,
+            underrun_run: 0,
             stats: JitterStats::default(),
             last_frame: vec![0.0; channels],
             drop_scratch: vec![0.0; channels],
@@ -65,8 +71,16 @@ impl JitterBuffer {
     }
 
     /// Accepts one packet off the network. Drops it (bumping the relevant
-    /// stat) if it's a duplicate, already played, or so far ahead it would
-    /// overrun the ring.
+    /// stat) if it's a duplicate or already played.
+    ///
+    /// Re-anchors the play position (`resync`) to the packet instead of
+    /// dropping it when the buffer can no longer recover on its own:
+    /// - it is `max_packets` or more ahead of the play position (playback
+    ///   stalled while the sender kept going, so every later packet would
+    ///   also look "too far ahead" forever), or
+    /// - we have been playing silence for at least `target_packets` slots and
+    ///   the packet is behind the play position (the sender stalled or
+    ///   restarted its sequence numbers while silence advanced the position).
     pub fn push(&mut self, pkt: AudioPacket) {
         self.stats.received += 1;
         let cap = self.slots.len() as u32;
@@ -75,7 +89,14 @@ impl JitterBuffer {
             self.next_play_seq = Some(pkt.seq);
         }
         let mut next = self.next_play_seq.unwrap();
-        let diff = pkt.seq.wrapping_sub(next) as i32;
+        let mut diff = pkt.seq.wrapping_sub(next) as i32;
+
+        let stalled = self.started && self.underrun_run >= self.cfg.target_packets;
+        if (diff < 0 && stalled) || (diff >= 0 && diff as u32 >= cap) {
+            self.resync(pkt.seq);
+            next = pkt.seq;
+            diff = 0;
+        }
 
         if self.started && diff < 0 {
             self.stats.late_dropped += 1;
@@ -87,12 +108,7 @@ impl JitterBuffer {
             self.next_play_seq = Some(pkt.seq);
             next = pkt.seq;
         }
-
-        let diff = pkt.seq.wrapping_sub(next) as i32;
-        if diff as u32 >= cap {
-            self.stats.late_dropped += 1;
-            return;
-        }
+        debug_assert!(pkt.seq.wrapping_sub(next) < cap);
 
         let slot = (pkt.seq % cap) as usize;
         if self.slots[slot].as_ref().is_some_and(|p| p.seq == pkt.seq) {
@@ -104,6 +120,16 @@ impl JitterBuffer {
         if !self.started && self.occupancy() >= self.cfg.target_packets {
             self.started = true;
         }
+    }
+
+    /// Discards everything buffered and restarts prefill at `seq`.
+    fn resync(&mut self, seq: u32) {
+        self.stats.resyncs += 1;
+        self.slots.iter_mut().for_each(|s| *s = None);
+        self.next_play_seq = Some(seq);
+        self.play_frame_cursor = 0;
+        self.underrun_run = 0;
+        self.started = false;
     }
 
     /// Fills `out` (interleaved, `out.len()` should be a multiple of the
@@ -158,6 +184,7 @@ impl JitterBuffer {
 
         match &self.slots[slot] {
             Some(pkt) if pkt.seq == next => {
+                self.underrun_run = 0;
                 let start = self.play_frame_cursor * self.channels;
                 out[dst_start..dst_end].copy_from_slice(&pkt.samples[start..start + self.channels]);
                 self.play_frame_cursor += 1;
@@ -172,6 +199,7 @@ impl JitterBuffer {
                 // frame — a 4-frame gap is one dropout event, not four.
                 if self.play_frame_cursor == 0 {
                     self.stats.underruns += 1;
+                    self.underrun_run += 1;
                 }
                 out[dst_start..dst_end].fill(0.0);
                 self.play_frame_cursor += 1;
@@ -238,6 +266,39 @@ mod tests {
         jb.read(&mut out2); // seq 1 missing -> silence + underrun
         assert_eq!(out2, vec![0.0; 4]);
         assert_eq!(jb.stats().underruns, 1);
+    }
+
+    #[test]
+    fn resyncs_when_playback_stalled_and_sender_ran_ahead() {
+        let cfg = JitterConfig { target_packets: 2, max_packets: 8 };
+        let mut jb = JitterBuffer::new(cfg, 1, 4);
+        jb.push(packet(0, 1, 4, 1.0));
+        jb.push(packet(1, 1, 4, 2.0));
+        // Playback stalls (no read) while the sender runs far ahead.
+        jb.push(packet(100, 1, 4, 5.0));
+        jb.push(packet(101, 1, 4, 6.0));
+        assert_eq!(jb.stats().resyncs, 1);
+        let mut out = vec![0.0; 4];
+        jb.read(&mut out);
+        assert_eq!(out, vec![5.0; 4]);
+    }
+
+    #[test]
+    fn resyncs_when_sender_restarts_after_stall() {
+        let cfg = JitterConfig { target_packets: 2, max_packets: 8 };
+        let mut jb = JitterBuffer::new(cfg, 1, 4);
+        jb.push(packet(0, 1, 4, 1.0));
+        jb.push(packet(1, 1, 4, 2.0));
+        let mut out = vec![0.0; 16]; // 2 real packets, then 2 packets of silence
+        jb.read(&mut out);
+        assert_eq!(jb.stats().underruns, 2);
+        // Sender comes back with a lower sequence than the advanced play position.
+        jb.push(packet(0, 1, 4, 7.0));
+        jb.push(packet(1, 1, 4, 8.0));
+        assert_eq!(jb.stats().resyncs, 1);
+        let mut out2 = vec![0.0; 4];
+        jb.read(&mut out2);
+        assert_eq!(out2, vec![7.0; 4]);
     }
 
     #[test]
