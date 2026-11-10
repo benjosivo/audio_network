@@ -23,7 +23,6 @@ serde_json = "1"
 anyhow = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-cpal = { workspace = true }
 parking_lot = { workspace = true }
 protocol = { workspace = true }
 network = { workspace = true }

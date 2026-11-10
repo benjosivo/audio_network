@@ -9,6 +9,8 @@
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::Arc;
 
+pub mod output;
+
 pub type SourceId = u32;
 
 /// One sender-side mixing-console channel: a source's volume/mute fader.

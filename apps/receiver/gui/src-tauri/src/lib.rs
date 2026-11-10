@@ -15,7 +15,7 @@ use std::thread::JoinHandle;
 use std::time::Duration;
 
 use audio_core_mixer::MasterGain;
-use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use audio_core_mixer::output::PlaybackOutput;
 use network::{JitterBuffer, JitterConfig, UdpAudioSocket};
 use parking_lot::Mutex;
 use protocol::MAX_UDP_PAYLOAD;
@@ -144,55 +144,27 @@ fn start_receiver(app: AppHandle, state: State<AppState>, cfg: StartConfig) -> R
                     .expect("failed to spawn UDP receive thread")
             };
 
-            let host = cpal::default_host();
-            let device = match host.default_output_device() {
-                Some(d) => d,
-                None => {
-                    stop_ctrl.store(true, Ordering::Relaxed);
-                    let _ = recv_join.join();
-                    let _ =
-                        app_ctrl.emit("receiver://event", ReceiverEvent::Error { message: "no default output device".into() });
-                    return;
-                }
-            };
-
-            let config = cpal::StreamConfig {
-                channels: channels as u16,
-                sample_rate: cpal::SampleRate(sample_rate),
-                buffer_size: cpal::BufferSize::Default,
-            };
-
-            let stream = {
+            let output = {
                 let jitter_buffer = jitter_buffer.clone();
                 let master = master_ctrl.clone();
-                device.build_output_stream(
-                    &config,
-                    move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                        jitter_buffer.lock().read(data);
-                        master.apply(data);
-                    },
-                    |err| tracing::error!("cpal output stream error: {err}"),
-                    None,
-                )
+                PlaybackOutput::open(channels as u16, sample_rate, move |data: &mut [f32]| {
+                    jitter_buffer.lock().read(data);
+                    master.apply(data);
+                })
             };
-            let stream = match stream {
-                Ok(s) => s,
-                Err(e) => {
+            let mut output = match output {
+                Ok(o) => o,
+                Err(message) => {
                     stop_ctrl.store(true, Ordering::Relaxed);
                     let _ = recv_join.join();
-                    let _ = app_ctrl.emit("receiver://event", ReceiverEvent::Error { message: e.to_string() });
+                    let _ = app_ctrl.emit("receiver://event", ReceiverEvent::Error { message });
                     return;
                 }
             };
-            if let Err(e) = stream.play() {
-                stop_ctrl.store(true, Ordering::Relaxed);
-                let _ = recv_join.join();
-                let _ = app_ctrl.emit("receiver://event", ReceiverEvent::Error { message: e.to_string() });
-                return;
-            }
 
             while !stop_ctrl.load(Ordering::Relaxed) {
                 std::thread::sleep(Duration::from_millis(500));
+                output.poll();
                 let stats = jitter_buffer.lock().stats();
                 let _ = app_ctrl.emit(
                     "receiver://event",
@@ -210,7 +182,7 @@ fn start_receiver(app: AppHandle, state: State<AppState>, cfg: StartConfig) -> R
                 );
             }
 
-            drop(stream);
+            drop(output);
             let _ = recv_join.join();
             let _ = app_ctrl.emit("receiver://event", ReceiverEvent::Stopped);
         })

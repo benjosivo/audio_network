@@ -3,6 +3,8 @@ name = "audio-core-mixer"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Sender-side per-source mixing/volume, and receiver-side local master gain."
+description = "Sender-side per-source mixing/volume, and receiver-side local master gain and playback output."
 
 [dependencies]
+cpal = { workspace = true }
+tracing = { workspace = true }

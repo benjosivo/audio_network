@@ -9,7 +9,6 @@ description = "CLI: receives a UDP audio stream, jitter-buffers it, and plays it
 protocol = { workspace = true }
 network = { workspace = true }
 audio-core-mixer = { workspace = true }
-cpal = { workspace = true }
 parking_lot = { workspace = true }
 clap = { workspace = true }
 tracing = { workspace = true }

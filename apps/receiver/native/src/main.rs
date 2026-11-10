@@ -8,10 +8,10 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use clap::Parser;
-use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use parking_lot::Mutex;
 
 use audio_core_mixer::MasterGain;
+use audio_core_mixer::output::PlaybackOutput;
 use network::{JitterBuffer, JitterConfig, UdpAudioSocket};
 use protocol::MAX_UDP_PAYLOAD;
 
@@ -82,36 +82,26 @@ fn main() -> Result<()> {
 
     let master_gain = Arc::new(MasterGain::new(args.master_volume, args.master_mute));
 
-    let host = cpal::default_host();
-    let device = host.default_output_device().context("no default output device")?;
-    tracing::info!(device = ?device.name().unwrap_or_default(), "opening output device");
-
-    let config = cpal::StreamConfig {
-        channels: channels as u16,
-        sample_rate: cpal::SampleRate(sample_rate),
-        buffer_size: cpal::BufferSize::Default,
-    };
-
-    let stream = {
+    let mut output = {
         let jitter_buffer = jitter_buffer.clone();
         let master_gain = master_gain.clone();
-        device
-            .build_output_stream(
-                &config,
-                move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                    jitter_buffer.lock().read(data);
-                    master_gain.apply(data);
-                },
-                |err| tracing::error!("cpal output stream error: {err}"),
-                None,
-            )
-            .context("failed to build output stream")?
+        PlaybackOutput::open(channels as u16, sample_rate, move |data: &mut [f32]| {
+            jitter_buffer.lock().read(data);
+            master_gain.apply(data);
+        })
+        .map_err(anyhow::Error::msg)
+        .context("failed to start playback")?
     };
-    stream.play().context("failed to start playback")?;
     tracing::info!("playback started");
 
+    let mut polls = 0u32;
     loop {
-        std::thread::sleep(Duration::from_secs(5));
+        std::thread::sleep(Duration::from_millis(500));
+        output.poll();
+        polls = polls.wrapping_add(1);
+        if !polls.is_multiple_of(10) {
+            continue;
+        }
         let stats = jitter_buffer.lock().stats();
         tracing::info!(
             received = stats.received,

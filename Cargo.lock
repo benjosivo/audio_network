@@ -293,6 +293,10 @@ dependencies = [
 [[package]]
 name = "audio-core-mixer"
 version = "0.1.0"
+dependencies = [
+ "cpal",
+ "tracing",
+]
 
 [[package]]
 name = "autocfg"
@@ -3126,7 +3130,6 @@ dependencies = [
  "anyhow",
  "audio-core-mixer",
  "clap",
- "cpal",
  "network",
  "parking_lot",
  "protocol",
@@ -3140,7 +3143,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "audio-core-mixer",
- "cpal",
  "network",
  "parking_lot",
  "protocol",
